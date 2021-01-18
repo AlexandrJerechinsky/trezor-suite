@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import chalk from 'chalk';
 import { app } from 'electron';
 
@@ -6,6 +7,7 @@ const logLevels = ['mute', 'error', 'warn', 'info', 'debug'] as const;
 export type LogLevel = typeof logLevels[number];
 
 export type Options = {
+    colors?: boolean; // Console output has colors
     writeToConsole?: boolean; // Output is displayed in the console
     writeToDisk?: boolean; // Output is written to a file
     outputFile?: string; // file name for the output
@@ -14,10 +16,11 @@ export type Options = {
 };
 
 const defaultOptions: Options = {
+    colors: true,
     writeToConsole: true,
     writeToDisk: false,
     outputFile: 'log-%ts.txt',
-    outputPath: app.getPath('logs'),
+    outputPath: app?.getPath('logs') || '',
     logFormat: '%dt - %0(%1): %2',
 };
 
@@ -35,7 +38,9 @@ class Logger implements ILogger {
         };
 
         if (this.logLevel > 0 && this.options.writeToDisk) {
-            this.stream = fs.createWriteStream(this.format(this.options.outputFile));
+            this.stream = fs.createWriteStream(
+                path.join(this.options.outputPath, this.format(this.options.outputFile)),
+            );
         }
     }
 
@@ -62,7 +67,7 @@ class Logger implements ILogger {
 
     private write(level: LogLevel, message: string) {
         if (this.options.writeToConsole) {
-            console.log(this.color(level, message));
+            console.log(this.options.colors ? this.color(level, message) : message);
         }
 
         if (this.options.writeToDisk) {
