@@ -5,7 +5,9 @@ import { shell, dialog } from 'electron';
 
 import * as config from '../config';
 
-const init = ({ mainWindow, store, logger }: Dependencies) => {
+const init = ({ mainWindow, store }: Dependencies) => {
+    const { logger } = global;
+
     const handleExternalLink = (event: Event, url: string) => {
         if (config.oauthUrls.some(u => url.startsWith(u))) {
             event.preventDefault();

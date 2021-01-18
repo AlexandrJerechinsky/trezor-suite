@@ -3,7 +3,9 @@ import { Menu } from 'electron';
 import { buildMainMenu, inputMenu, selectionMenu } from '@lib/menu';
 import { b2t } from '@lib/utils';
 
-const init = ({ mainWindow, logger }: Dependencies) => {
+const init = ({ mainWindow }: Dependencies) => {
+    const { logger } = global;
+
     Menu.setApplicationMenu(buildMainMenu());
     mainWindow.setMenuBarVisibility(false);
 

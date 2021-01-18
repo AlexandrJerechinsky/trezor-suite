@@ -3,7 +3,7 @@ import url from 'url';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import isDev from 'electron-is-dev';
 
-import { RESOURCES, PROTOCOL } from '@lib/constants';
+import { PROTOCOL } from '@lib/constants';
 import * as store from '@lib/store';
 import { MIN_HEIGHT, MIN_WIDTH } from '@lib/screen';
 import Logger, { LogLevel } from '@lib/logger';
@@ -29,10 +29,15 @@ const log = {
 };
 
 const logger = new Logger(log.level as LogLevel, { ...log });
-logger.info('Main', 'Application starting');
 
 // Globals
+global.logger = logger;
+global.resourcesPath = isDev
+    ? path.join(__dirname, '..', 'public', 'static')
+    : process.resourcesPath;
 global.quitOnWindowClose = false;
+
+logger.info('Main', 'Application starting');
 
 const init = async () => {
     buildInfo();
@@ -56,7 +61,7 @@ const init = async () => {
             enableRemoteModule: false,
             preload: path.join(__dirname, 'preload.js'),
         },
-        icon: path.join(RESOURCES, 'images', 'icons', '512x512.png'),
+        icon: path.join(global.resourcesPath, 'images', 'icons', '512x512.png'),
     });
 
     // Load page
@@ -65,7 +70,6 @@ const init = async () => {
 
     // Modules
     await modules({
-        logger,
         mainWindow,
         src,
         store,

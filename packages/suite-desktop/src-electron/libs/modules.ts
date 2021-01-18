@@ -2,7 +2,7 @@ import isDev from 'electron-is-dev';
 import { MODULES } from '@lib/constants';
 
 const modules = async (dependencies: Dependencies) => {
-    const { logger } = dependencies;
+    const { logger } = global;
 
     logger.info('Modules', `Loading ${MODULES.length} modules`);
 
@@ -16,10 +16,7 @@ const modules = async (dependencies: Dependencies) => {
                 return [];
             }
 
-            const deps: { [name in keyof Dependencies]: any } = {
-                logger,
-            };
-
+            const deps: { [name in keyof Dependencies]: any } = {};
             module.dependencies.forEach((dep: keyof Dependencies) => {
                 if (dependencies[dep] === undefined) {
                     logger.error(

@@ -8,7 +8,9 @@ import * as config from '../config';
 
 const disableCspFlag = app.commandLine.hasSwitch('disable-csp');
 
-const init = ({ mainWindow, logger }: Dependencies) => {
+const init = ({ mainWindow }: Dependencies) => {
+    const { logger } = global;
+
     if (disableCspFlag) {
         logger.warn('CSP', 'The application was launched with CSP disabled');
         dialog.showMessageBox(mainWindow, {

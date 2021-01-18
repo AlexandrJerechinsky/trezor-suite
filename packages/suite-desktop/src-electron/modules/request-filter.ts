@@ -5,7 +5,9 @@ import { dialog, session } from 'electron';
 
 import * as config from '../config';
 
-const init = ({ mainWindow, logger }: Dependencies) => {
+const init = ({ mainWindow }: Dependencies) => {
+    const { logger } = global;
+
     const resourceTypeFilter = ['xhr']; // What resource types we want to filter
     const caughtDomainExceptions: string[] = []; // Domains that have already shown an exception
     session.defaultSession.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, cb) => {

@@ -19,8 +19,7 @@
             "outFiles": [
                 "${workspaceRoot}/packages/suite-desktop/dist/**/*.js"
             ],
-            "preLaunchTask": "desktop:dev",
-            "postDebugTask": "end-tasks"
+            "preLaunchTask": "desktop:dev"
         }
     ]
 }

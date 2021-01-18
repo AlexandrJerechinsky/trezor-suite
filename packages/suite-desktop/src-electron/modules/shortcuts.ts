@@ -1,7 +1,9 @@
 import { app } from 'electron';
 import electronLocalshortcut from 'electron-localshortcut';
 
-const init = ({ mainWindow, src, logger }: Dependencies) => {
+const init = ({ mainWindow, src }: Dependencies) => {
+    const { logger } = global;
+
     electronLocalshortcut.register(mainWindow, 'CommandOrControl+Alt+I', () => {
         logger.debug('Shortcuts', 'CTRL+ALT+I pressed');
         mainWindow.webContents.openDevTools();

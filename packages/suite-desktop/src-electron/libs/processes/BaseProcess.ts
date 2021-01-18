@@ -1,8 +1,7 @@
 import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import isDev from 'electron-is-dev';
-import { RESOURCES } from '@lib/constants';
-import Logger from '@lib/logger';
+import { b2t } from '@lib/utils';
 
 export type Status = {
     service: boolean;
@@ -50,7 +49,14 @@ abstract class BaseProcess {
             ...defaultOptions,
             ...options,
         };
-        this.logger = Logger.getInstance();
+
+        const { logger } = global;
+        this.logger = logger;
+
+        const { system } = this.getPlatformInfo();
+        if (!this.isSystemSupported(system)) {
+            throw new Error(`[${this.resourceName}] unsupported system (${system})`);
+        }
     }
 
     /**
@@ -65,7 +71,10 @@ abstract class BaseProcess {
      * @param params Command line parameters for the process
      */
     async start(params: string[] = []) {
+        this.logger.debug(`BaseProcess-${this.processName}`, 'Starting...');
+
         if (this.startupThrottle) {
+            this.logger.debug(`BaseProcess-${this.processName}`, 'Canceling start (throttle)');
             return;
         }
 
@@ -73,30 +82,44 @@ abstract class BaseProcess {
 
         // Service is running, nothing to do
         if (status.service) {
+            this.logger.debug(
+                `BaseProcess-${this.processName}`,
+                'Canceling start (service running)',
+            );
             return;
         }
 
         // If the process is running but the service isn't
         if (status.process) {
+            this.logger.debug(
+                `BaseProcess-${this.processName}`,
+                'Process is running but service is not',
+            );
             // Stop the process
             await this.stop();
         }
 
         // Throttle process start
         if (this.options.startupCooldown && this.options.startupCooldown > 0) {
+            this.logger.debug(
+                `BaseProcess-${this.processName}`,
+                `Setting a restart throttle (${this.options.startupCooldown})`,
+            );
             this.startupThrottle = setTimeout(() => {
+                this.logger.debug(`BaseProcess-${this.processName}`, 'Clearing throttle');
                 this.startupThrottle = null;
             }, this.options.startupCooldown * 1000);
         }
 
-        const { system, ext } = this.getPlatformInfo();
-        if (!this.isSystemSupported(system)) {
-            throw new Error(`[${this.resourceName}] unsupported system (${system})`);
-        }
-
         this.stopped = false;
 
-        const processDir = path.join(RESOURCES, 'bin', this.resourceName, isDev ? system : '');
+        const { system, ext } = this.getPlatformInfo();
+        const processDir = path.join(
+            global.resourcesPath,
+            'bin',
+            this.resourceName,
+            isDev ? system : '',
+        );
         const processPath = path.join(processDir, `${this.processName}${ext}`);
         const processEnv = { ...process.env };
         // library search path for macOS
@@ -107,6 +130,13 @@ abstract class BaseProcess {
         processEnv.LD_LIBRARY_PATH = processEnv.LD_LIBRARY_PATH
             ? `${processEnv.LD_LIBRARY_PATH}:${processDir}`
             : `${processDir}`;
+
+        this.logger.debug(`BaseProcess-${this.processName}`, [
+            'Spawning:',
+            `- Path: ${processPath}`,
+            `- Params: ${params}`,
+            `- CWD: ${processDir}`,
+        ]);
         this.process = spawn(processPath, params, {
             cwd: processDir,
             env: processEnv,
@@ -120,17 +150,23 @@ abstract class BaseProcess {
      */
     stop() {
         return new Promise<void>(resolve => {
+            this.logger.debug(`BaseProcess-${this.processName}`, 'Stopping...');
+
             if (!this.process) {
+                this.logger.debug(`BaseProcess-${this.processName}`, 'Already stopped');
                 this.stopped = true;
                 resolve();
                 return;
             }
 
+            this.logger.debug(`BaseProcess-${this.processName}`, 'Graceful kill');
             this.process.kill();
 
             let timeout = 0;
             const interval = setInterval(() => {
+                this.logger.debug(`BaseProcess-${this.processName}`, 'Checking if still alive');
                 if (!this.process || this.process.killed) {
+                    this.logger.debug(`BaseProcess-${this.processName}`, 'Killed successfully');
                     clearInterval(interval);
                     this.process = null;
                     this.stopped = true;
@@ -139,8 +175,16 @@ abstract class BaseProcess {
                 }
 
                 if (this.options.stopKillWait && timeout < this.options.stopKillWait) {
+                    this.logger.debug(
+                        `BaseProcess-${this.processName}`,
+                        'Still alive, checkign again...',
+                    );
                     timeout++;
                 } else {
+                    this.logger.debug(
+                        `BaseProcess-${this.processName}`,
+                        'Still alive, hasta la vista baby',
+                    );
                     this.process.kill('SIGKILL');
                 }
             }, 1000);
@@ -152,17 +196,23 @@ abstract class BaseProcess {
      * @param force Force the restart
      */
     async restart() {
+        this.logger.debug(`BaseProcess-${this.processName}`, 'Restarting...');
         await this.stop();
         await this.start();
     }
 
     onError(err: Error) {
-        this.logger.error('BaseProcess', `${this.processName} - ${err.message}`);
+        this.logger.error(`BaseProcess-${this.processName}`, err.message);
     }
 
     onExit() {
+        this.logger.debug(
+            `BaseProcess-${this.processName}`,
+            `Exited (Stopped: ${b2t(this.stopped)})`,
+        );
         this.process = null;
         if (this.options.autoRestart && this.options.autoRestart > 0 && !this.stopped) {
+            this.logger.debug(`BaseProcess-${this.processName}`, 'Auto restarting...');
             setTimeout(() => this.start(), this.options.autoRestart * 1000);
         }
     }

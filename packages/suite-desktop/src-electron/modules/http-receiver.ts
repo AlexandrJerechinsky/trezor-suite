@@ -9,7 +9,9 @@ import { HttpReceiver } from '@lib/http-receiver';
 // External request handler
 const httpReceiver = new HttpReceiver();
 
-const init = ({ mainWindow, src, logger }: Dependencies) => {
+const init = ({ mainWindow, src }: Dependencies) => {
+    const { logger } = global;
+
     // wait for httpReceiver to start accepting connections then register event handlers
     httpReceiver.on('server/listening', () => {
         // when httpReceiver accepted oauth response
@@ -27,13 +29,15 @@ const init = ({ mainWindow, src, logger }: Dependencies) => {
         });
 
         // when httpReceiver was asked to provide current address for given pathname
-        ipcMain.handle('server/request-address', (_event, pathname) =>
+        ipcMain.handle('server/request-address', (_, pathname) =>
             httpReceiver.getRouteAddress(pathname),
         );
     });
 
+    logger.debug('HTTP Receiver', 'Starting server');
     httpReceiver.start();
     app.on('before-quit', () => {
+        logger.debug('HTTP Receiver', 'Stopping server (app quit)');
         httpReceiver.stop();
     });
 };

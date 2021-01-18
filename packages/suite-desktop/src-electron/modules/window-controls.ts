@@ -15,7 +15,9 @@ const notifyWindowActive = (window: BrowserWindow, state: boolean) => {
     window.webContents.send('window/is-active', state);
 };
 
-const init = ({ mainWindow, store, logger }: Dependencies) => {
+const init = ({ mainWindow, store }: Dependencies) => {
+    const { logger } = global;
+
     if (process.platform === 'darwin') {
         // macOS specific window behavior
         // it is common for applications and their context menu to stay active until the user quits explicitly

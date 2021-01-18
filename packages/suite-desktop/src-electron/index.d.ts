@@ -1,6 +1,8 @@
 // Globals
 declare namespace NodeJS {
     export interface Global {
+        logger: ILogger;
+        resourcesPath: string;
         quitOnWindowClose: boolean;
     }
 }
@@ -42,7 +44,6 @@ declare interface ILogger {
 
 // Dependencies
 declare type Dependencies = {
-    logger: ILogger;
     mainWindow?: Electron.BrowserWindow;
     store?: LocalStore;
     src?: string;

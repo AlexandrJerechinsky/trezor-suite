@@ -2,17 +2,11 @@ import { app } from 'electron';
 import isDev from 'electron-is-dev';
 import si from 'systeminformation';
 
-import Logger from '@lib/logger';
 import { b2t } from '@lib/utils';
 import { toHumanReadable } from '@suite/utils/suite/file';
 
 export const buildInfo = () => {
-    const logger = Logger.getInstance();
-    if (!logger) {
-        return;
-    }
-
-    logger.info('Build', [
+    global.logger.info('Build', [
         'Info:',
         `- Version: ${app.getVersion()}`,
         `- Commit: ${process.env.COMMITHASH}`,
@@ -23,8 +17,8 @@ export const buildInfo = () => {
 };
 
 export const computerInfo = async () => {
-    const logger = Logger.getInstance();
-    if (!logger && logger.level !== 'debug') {
+    const { logger } = global;
+    if (logger.level !== 'debug') {
         return;
     }
 

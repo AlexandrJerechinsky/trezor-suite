@@ -28,21 +28,15 @@ class Logger implements ILogger {
     private logLevel = 0;
 
     constructor(level: LogLevel, options?: Options) {
-        if (!Logger.instance) {
-            Logger.instance = this;
+        this.logLevel = logLevels.indexOf(level);
+        this.options = {
+            ...defaultOptions,
+            ...options,
+        };
 
-            this.logLevel = logLevels.indexOf(level);
-            this.options = {
-                ...defaultOptions,
-                ...options,
-            };
-
-            if (this.logLevel > 0 && this.options.writeToDisk) {
-                this.stream = fs.createWriteStream(this.format(this.options.outputFile));
-            }
+        if (this.logLevel > 0 && this.options.writeToDisk) {
+            this.stream = fs.createWriteStream(this.format(this.options.outputFile));
         }
-
-        return Logger.instance;
     }
 
     private log(level: LogLevel, topic: string, message: string | string[]) {
@@ -129,10 +123,6 @@ class Logger implements ILogger {
 
     public get level() {
         return logLevels[this.logLevel];
-    }
-
-    static getInstance() {
-        return this.instance;
     }
 }
 

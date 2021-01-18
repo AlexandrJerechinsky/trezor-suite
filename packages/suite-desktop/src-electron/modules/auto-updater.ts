@@ -9,7 +9,9 @@ import { b2t } from '@lib/utils';
 // Runtime flags
 const preReleaseFlag = app.commandLine.hasSwitch('pre-release');
 
-const init = ({ mainWindow, store, logger }: Dependencies) => {
+const init = ({ mainWindow, store }: Dependencies) => {
+    const { logger } = global;
+
     let isManualCheck = false;
     let latestVersion = {};
     let updateCancellationToken: CancellationToken;

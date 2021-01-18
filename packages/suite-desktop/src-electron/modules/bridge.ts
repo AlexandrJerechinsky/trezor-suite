@@ -10,9 +10,11 @@ const filter = {
 };
 
 const bridgeDev = app.commandLine.hasSwitch('bridge-dev');
-const bridge = new BridgeProcess();
 
-const init = async ({ logger }: Dependencies) => {
+const init = async () => {
+    const { logger } = global;
+    const bridge = new BridgeProcess();
+
     session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
         // @ts-ignore electron declares requestHeaders as an empty interface
         details.requestHeaders.Origin = 'https://electron.trezor.io';

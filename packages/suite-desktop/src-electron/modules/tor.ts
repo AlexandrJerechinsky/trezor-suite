@@ -4,15 +4,15 @@
 import { app, session, ipcMain, IpcMainEvent } from 'electron';
 
 import TorProcess from '@lib/processes/TorProcess';
-
-import { onionDomain } from '../config';
 import { b2t } from '@lib/utils';
 
-const tor = new TorProcess();
+import { onionDomain } from '../config';
 
 const torFlag = app.commandLine.hasSwitch('tor');
 
-const init = async ({ mainWindow, store, logger }: Dependencies) => {
+const init = async ({ mainWindow, store }: Dependencies) => {
+    const { logger } = global;
+    const tor = new TorProcess();
     const torSettings = store.getTorSettings();
 
     const toggleTor = async (start: boolean) => {
