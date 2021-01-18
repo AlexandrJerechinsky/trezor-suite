@@ -17,7 +17,7 @@ export const buildInfo = () => {
         `- Version: ${app.getVersion()}`,
         `- Commit: ${process.env.COMMITHASH}`,
         `- Dev: ${b2t(isDev)}`,
-        `- Args: TODO`,
+        `- Args: ${process.argv.slice(1).join(' ')}`,
         `- CWD: ${process.cwd()}`,
     ]);
 };

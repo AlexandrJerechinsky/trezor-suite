@@ -10,6 +10,7 @@ const disableCspFlag = app.commandLine.hasSwitch('disable-csp');
 
 const init = ({ mainWindow, logger }: Dependencies) => {
     if (disableCspFlag) {
+        logger.warn('CSP', 'The application was launched with CSP disabled');
         dialog.showMessageBox(mainWindow, {
             type: 'warning',
             message:
@@ -18,6 +19,7 @@ const init = ({ mainWindow, logger }: Dependencies) => {
         });
     } else {
         session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+            logger.debug('CSP', `Header applied to ${details.url}`);
             callback({
                 responseHeaders: {
                     'Content-Security-Policy': [config.cspRules.join(';')],

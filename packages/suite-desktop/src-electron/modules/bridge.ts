@@ -3,6 +3,7 @@
  */
 import { app, session } from 'electron';
 import BridgeProcess from '@lib/processes/BridgeProcess';
+import { b2t } from '@lib/utils';
 
 const filter = {
     urls: ['http://127.0.0.1:21325/*'],
@@ -19,6 +20,7 @@ const init = async ({ logger }: Dependencies) => {
     });
 
     try {
+        logger.debug('Bridge', `Starting (Dev: ${b2t(bridgeDev)})`);
         if (bridgeDev) {
             await bridge.startDev();
         } else {
@@ -28,7 +30,10 @@ const init = async ({ logger }: Dependencies) => {
         //
     }
 
-    app.on('before-quit', () => bridge.stop());
+    app.on('before-quit', () => {
+        logger.debug('Bridge', 'Stopping (app quit)');
+        bridge.stop();
+    });
 };
 
 export default init;

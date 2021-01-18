@@ -4,6 +4,7 @@
 
 import { app, ipcMain } from 'electron';
 import { autoUpdater, CancellationToken } from 'electron-updater';
+import { b2t } from '@lib/utils';
 
 // Runtime flags
 const preReleaseFlag = app.commandLine.hasSwitch('pre-release');
@@ -18,18 +19,34 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.allowPrerelease = preReleaseFlag;
 
+    logger.info('Auto Updater', `Is looking for pre-releases? (${b2t(preReleaseFlag)})`);
+
     if (updateSettings.skipVersion) {
+        logger.debug('Auto Updater', `Set to skip version ${updateSettings.skipVersion}`);
         mainWindow.webContents.send('update/skip', updateSettings.skipVersion);
     }
 
     autoUpdater.on('checking-for-update', () => {
+        logger.debug('Auto Updater', 'Checking for update');
         mainWindow.webContents.send('update/checking');
     });
 
     autoUpdater.on('update-available', ({ version, releaseDate }) => {
         if (updateSettings.skipVersion === version) {
+            logger.info('Auto Updater', [
+                'Update is available but was skipped:',
+                `- Update version: ${version}`,
+                `- Skip version: ${updateSettings.skipVersion}`,
+            ]);
             return;
         }
+
+        logger.info('Auto Updater', [
+            'Update is available:',
+            `- Update version: ${version}`,
+            `- Release date: ${releaseDate}`,
+            `- Manual check: ${b2t(isManualCheck)}`,
+        ]);
 
         latestVersion = { version, releaseDate, isManualCheck };
         mainWindow.webContents.send('update/available', latestVersion);
@@ -39,6 +56,13 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
     });
 
     autoUpdater.on('update-not-available', ({ version, releaseDate }) => {
+        logger.info('Auto Updater', [
+            'No new update is available:',
+            `- Last version: ${version}`,
+            `- Last release date: ${releaseDate}`,
+            `- Manual check: ${b2t(isManualCheck)}`,
+        ]);
+
         latestVersion = { version, releaseDate, isManualCheck };
         mainWindow.webContents.send('update/not-available', latestVersion);
 
@@ -47,14 +71,22 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
     });
 
     autoUpdater.on('error', err => {
+        logger.debug('Auto Updater', `An error happened: ${err.toString()}`);
         mainWindow.webContents.send('update/error', err);
     });
 
     autoUpdater.on('download-progress', progressObj => {
+        logger.debug('Auto Updater', `Download in progress: ${progressObj}`);
         mainWindow.webContents.send('update/downloading', { ...progressObj });
     });
 
     autoUpdater.on('update-downloaded', ({ version, releaseDate, downloadedFile }) => {
+        logger.info('Auto Updater', [
+            'Update downloaded:',
+            `- Last version: ${version}`,
+            `- Last release date: ${releaseDate}`,
+            `- Downloaded file: ${downloadedFile}`,
+        ]);
         mainWindow.webContents.send('update/downloaded', { version, releaseDate, downloadedFile });
     });
 
@@ -63,9 +95,11 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
             isManualCheck = true;
         }
 
+        logger.debug('Auto Updater', `Request update check (Manual: ${b2t(isManualCheck)})`);
         autoUpdater.checkForUpdates();
     });
     ipcMain.on('update/download', () => {
+        logger.debug('Auto Updater', 'Request download');
         mainWindow.webContents.send('update/downloading', {
             percent: 0,
             bytesPerSecond: 0,
@@ -73,9 +107,13 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
             transferred: 0,
         });
         updateCancellationToken = new CancellationToken();
-        autoUpdater.downloadUpdate(updateCancellationToken).catch(() => null); // Suppress error in console
+        autoUpdater
+            .downloadUpdate(updateCancellationToken)
+            .then(() => logger.info('Auto Updater', 'Update cancelled'))
+            .catch(() => null); // Suppress error in console
     });
     ipcMain.on('update/install', () => {
+        logger.debug('Auto Updater', 'Request install');
         // This will force the closing of the window to quit the app on Mac
         global.quitOnWindowClose = true;
         // https://www.electron.build/auto-update#module_electron-updater.AppUpdater+quitAndInstall
@@ -85,10 +123,12 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
         autoUpdater.quitAndInstall(true, true);
     });
     ipcMain.on('update/cancel', () => {
+        logger.debug('Auto Updater', 'Request cancel');
         mainWindow.webContents.send('update/available', latestVersion);
         updateCancellationToken.cancel();
     });
     ipcMain.on('update/skip', (_, version) => {
+        logger.debug('Auto Updater', `Request skip (${version})`);
         mainWindow.webContents.send('update/skip', version);
         updateSettings.skipVersion = version;
         store.setUpdateSettings(updateSettings);

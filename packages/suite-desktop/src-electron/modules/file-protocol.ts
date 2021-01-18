@@ -15,7 +15,11 @@ const init = ({ mainWindow, src, logger }: Dependencies) => {
     });
 
     // Refresh if it failed to load
-    mainWindow.webContents.on('did-fail-load', () => {
+    mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedUrl) => {
+        logger.warn(
+            'File Protocol',
+            `Failure to load ${validatedUrl} (${errorCode} - ${errorDescription})`,
+        );
         mainWindow.loadURL(src);
     });
 };

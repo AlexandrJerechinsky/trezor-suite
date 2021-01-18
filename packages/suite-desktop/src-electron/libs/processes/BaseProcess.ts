@@ -1,7 +1,8 @@
 import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import isDev from 'electron-is-dev';
-import { RESOURCES } from '../constants';
+import { RESOURCES } from '@lib/constants';
+import Logger from '@lib/logger';
 
 export type Status = {
     service: boolean;
@@ -33,6 +34,7 @@ abstract class BaseProcess {
     startupThrottle: ReturnType<typeof setTimeout> | null;
     supportedSystems = ['linux-arm64', 'linux-x64', 'mac-x64', 'win-x64'];
     stopped = false;
+    logger: ILogger;
 
     /**
      * @param resourceName Resource folder name
@@ -48,6 +50,7 @@ abstract class BaseProcess {
             ...defaultOptions,
             ...options,
         };
+        this.logger = Logger.getInstance();
     }
 
     /**
@@ -154,7 +157,7 @@ abstract class BaseProcess {
     }
 
     onError(err: Error) {
-        console.error('ERROR', this.processName, err);
+        this.logger.error('BaseProcess', `${this.processName} - ${err.message}`);
     }
 
     onExit() {

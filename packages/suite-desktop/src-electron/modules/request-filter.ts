@@ -10,14 +10,21 @@ const init = ({ mainWindow, logger }: Dependencies) => {
     const caughtDomainExceptions: string[] = []; // Domains that have already shown an exception
     session.defaultSession.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, cb) => {
         if (!resourceTypeFilter.includes(details.resourceType)) {
+            logger.debug(
+                'Request Filter',
+                `${details.url} was allowed because its resource type (${details.resourceType}) is not filtered`,
+            );
             cb({ cancel: false });
             return;
         }
 
         const { hostname } = new URL(details.url);
 
-        // Cancel requests that aren't allowed
         if (config.allowedDomains.find(d => hostname.endsWith(d)) !== undefined) {
+            logger.debug(
+                'Request Filter',
+                `${details.url} was allowed because ${hostname} is in the exception list`,
+            );
             cb({ cancel: false });
             return;
         }
@@ -31,7 +38,10 @@ const init = ({ mainWindow, logger }: Dependencies) => {
             });
         }
 
-        console.warn(`[Warning] Domain '${hostname}' was blocked.`);
+        logger.warn(
+            'Request Filter',
+            `${details.url} was blocked because ${hostname} is not in the exception list`,
+        );
         cb({ cancel: true });
     });
 };

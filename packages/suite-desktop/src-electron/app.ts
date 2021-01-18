@@ -3,15 +3,12 @@ import url from 'url';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import isDev from 'electron-is-dev';
 
-// Libs
 import { RESOURCES, PROTOCOL } from '@lib/constants';
 import * as store from '@lib/store';
 import { MIN_HEIGHT, MIN_WIDTH } from '@lib/screen';
 import Logger, { LogLevel } from '@lib/logger';
 import { buildInfo, computerInfo } from '@lib/info';
-
-// Modules
-import modules from '@module/index';
+import modules from '@lib/modules';
 
 let mainWindow: BrowserWindow;
 const APP_NAME = 'Trezor Suite';
@@ -32,7 +29,7 @@ const log = {
 };
 
 const logger = new Logger(log.level as LogLevel, { ...log });
-logger.info('Main', 'Application starting.');
+logger.info('Main', 'Application starting');
 
 // Globals
 global.quitOnWindowClose = false;

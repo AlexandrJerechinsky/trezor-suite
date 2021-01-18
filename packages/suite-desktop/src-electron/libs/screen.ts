@@ -1,4 +1,5 @@
 import { screen } from 'electron';
+import Logger from '@lib/logger';
 
 // Constants
 export const MIN_WIDTH = 770;
@@ -9,7 +10,11 @@ export const BUFFER = 0.2;
 
 // Functions
 export const getInitialWindowSize = () => {
+    const logger = Logger.getInstance();
+
     const { bounds } = screen.getPrimaryDisplay();
+    logger.debug('Screen', `Primary display: ${bounds.width}x${bounds.height}`);
+
     const buffer = {
         width: bounds.width * BUFFER,
         height: bounds.height * BUFFER,
@@ -28,6 +33,8 @@ export const getInitialWindowSize = () => {
     } else if (height >= MAX_HEIGHT) {
         height = MAX_HEIGHT;
     }
+
+    logger.debug('Screen', `Calculated size: ${width}x${height}`);
 
     return {
         width,

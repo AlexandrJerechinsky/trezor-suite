@@ -9,6 +9,8 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
     const handleExternalLink = (event: Event, url: string) => {
         if (config.oauthUrls.some(u => url.startsWith(u))) {
             event.preventDefault();
+
+            logger.info('External Links', `${url} was allowed (OAuth list)`);
             return shell.openExternal(url);
         }
 
@@ -23,9 +25,16 @@ const init = ({ mainWindow, store, logger }: Dependencies) => {
                     message: `The following URL is going to be opened in your browser\n\n${url}`,
                     buttons: ['Cancel', 'Continue'],
                 });
+                const cancel = result === 0;
+                logger.info(
+                    'External Links',
+                    `${url} was ${cancel ? 'not ' : ''}allowed by user in TOR mode`,
+                );
+
                 // Cancel
-                if (result === 0) return;
+                if (cancel) return;
             }
+            logger.debug('External Links', `${url} opened in default browser`);
             shell.openExternal(url);
         }
     };
